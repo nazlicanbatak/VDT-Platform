@@ -103,14 +103,14 @@ monitor_speed = 115200
 | **AIN1** | `GPIO 26` | Sol Motor Yön Pini 1 |
 | **AIN2** | `GPIO 27` | Sol Motor Yön Pini 2 |
 | **PWMB** | `GPIO 14` | Sağ Motor Hız Kontrolü (PWM) |
-| **BIN1** | `GPIO 12` | Sağ Motor Yön Pini 1 |
+| **BIN1** | `GPIO 32` | Sağ Motor Yön Pini 1 (12 strapping, 16 DevKit V1'de yok → 32) |
 | **BIN2** | `GPIO 13` | Sağ Motor Yön Pini 2 |
 | **STBY** | `GPIO 33` | Sürücü Standby/Aktif Pini |
 | **VCC** | ESP32 `3V3` | Mantık Voltajı (3.3V) |
 | **VM** | Pil (+) 7.4V | Motor Güç Hattı |
 | **GND** | ESP32 `GND` + Pil (-) | Ortak Şase (Common Ground) |
 
-*(Not: Boşta kalan veya strapping pini olmayan GPIO'lar tercih edilmiştir. İhtiyaca göre kartınızın şematiğine göre revize edilebilir.)*
+*(Not: Strapping pini olmayan GPIO'lar tercih edilmiştir. Tek kaynak: `firmware/include/pins.h`, tam harita: `docs/pinout.md`.)*
 
 ---
 
@@ -222,11 +222,12 @@ void MotorDriver::stopAll() {
 ```cpp
 #include <Arduino.h>
 #include "motor_driver.h"
+#include "pins.h"
 
-// Pin konfigürasyonları
-MotorPins leftPins  = { .pwm = 25, .in1 = 26, .in2 = 27 };
-MotorPins rightPins = { .pwm = 14, .in1 = 12, .in2 = 13 };
-const uint8_t STBY_PIN = 33;
+// Pin konfigürasyonları (değerler pins.h içinde)
+MotorPins leftPins  = { .pwm = PIN_MOTOR_PWMA, .in1 = PIN_MOTOR_AIN1, .in2 = PIN_MOTOR_AIN2 };
+MotorPins rightPins = { .pwm = PIN_MOTOR_PWMB, .in1 = PIN_MOTOR_BIN1, .in2 = PIN_MOTOR_BIN2 };
+const uint8_t STBY_PIN = PIN_MOTOR_STBY;
 
 MotorDriver motors(leftPins, rightPins, STBY_PIN);
 
