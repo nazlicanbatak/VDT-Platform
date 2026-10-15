@@ -1,0 +1,8 @@
+{
+    "C_Cpp.default.intelliSenseMode": "linux-gcc-arm",
+    "clangd.arguments": [
+        "--query-driver=/Users/egekaygisizer/.platformio/packages/toolchain-xtensa-esp32/bin/xtensa-esp32-elf-*",
+        "--background-index",
+        "--header-insertion=never"
+    ]
+}

@@ -1,0 +1,19 @@
+CompileFlags:
+  Remove:
+    - -mlongcalls
+    - -mtext-section-literals
+    - -fno-tree-switch-conversion
+    - -fstrict-volatile-bitfields
+    - -fno-jump-tables
+    - -freorder-blocks
+    - -fipa-pta
+    - -free
+    - -Wno-frame-address
+  Add:
+    - -Wno-unknown-warning-option
+    - -Wno-unused-command-line-argument
+
+Diagnostics:
+  Suppress:
+    - drv_unknown_argument
+    - drv_unknown_argument_with_suggestion

@@ -67,10 +67,10 @@ Robotik ve gömülü sistem geliştirmede en sık yapılan hata, tüm elektronik
   - `GND`: Ortak Toprak Hattı
   - `STBY`: ESP32 GPIO pini (veya test için doğrudan 3.3V)
   - `PWMA` / `PWMB`: ESP32 PWM pinleri
-  - `AIN1`, `AIN2`: Sol motor yön pinleri
-  - `BIN1`, `BIN2`: Sağ motor yön pinleri
-  - `AO1`, `AO2`: Sol DC Motor
-  - `BO1`, `BO2`: Sağ DC Motor
+  - `AIN1`, `AIN2`: Sağ motor yön pinleri (Kanal A)
+  - `BIN1`, `BIN2`: Sol motor yön pinleri (Kanal B)
+  - `AO1`, `AO2`: Sağ DC Motor
+  - `BO1`, `BO2`: Sol DC Motor
 
 ---
 
@@ -99,18 +99,18 @@ monitor_speed = 115200
 
 | TB6612FNG Pini | ESP32 GPIO | Açıklama |
 |---|---|---|
-| **PWMA** | `GPIO 25` | Sol Motor Hız Kontrolü (PWM) |
-| **AIN1** | `GPIO 26` | Sol Motor Yön Pini 1 |
-| **AIN2** | `GPIO 27` | Sol Motor Yön Pini 2 |
-| **PWMB** | `GPIO 14` | Sağ Motor Hız Kontrolü (PWM) |
-| **BIN1** | `GPIO 32` | Sağ Motor Yön Pini 1 (12 strapping, 16 DevKit V1'de yok → 32) |
-| **BIN2** | `GPIO 13` | Sağ Motor Yön Pini 2 |
+| **PWMA** | `GPIO 25` | Sağ Motor Hız Kontrolü (PWM) |
+| **AIN1** | `GPIO 26` | Sağ Motor Yön Pini 1 |
+| **AIN2** | `GPIO 27` | Sağ Motor Yön Pini 2 |
+| **PWMB** | `GPIO 14` | Sol Motor Hız Kontrolü (PWM) |
+| **BIN1** | `GPIO 32` | Sol Motor Yön Pini 1 (12 strapping, 16 DevKit V1'de yok → 32) |
+| **BIN2** | `GPIO 13` | Sol Motor Yön Pini 2 |
 | **STBY** | `GPIO 33` | Sürücü Standby/Aktif Pini |
 | **VCC** | ESP32 `3V3` | Mantık Voltajı (3.3V) |
 | **VM** | Pil (+) 7.4V | Motor Güç Hattı |
 | **GND** | ESP32 `GND` + Pil (-) | Ortak Şase (Common Ground) |
 
-*(Not: Strapping pini olmayan GPIO'lar tercih edilmiştir. Tek kaynak: `firmware/include/pins.h`, tam harita: `docs/pinout.md`.)*
+*(Not: Strapping pini olmayan GPIO'lar tercih edilmiştir. Tek kaynak: `software/include/pins.h`, tam harita: `docs/pinout.md`.)*
 
 ---
 
@@ -224,9 +224,9 @@ void MotorDriver::stopAll() {
 #include "motor_driver.h"
 #include "pins.h"
 
-// Pin konfigürasyonları (değerler pins.h içinde)
-MotorPins leftPins  = { .pwm = PIN_MOTOR_PWMA, .in1 = PIN_MOTOR_AIN1, .in2 = PIN_MOTOR_AIN2 };
-MotorPins rightPins = { .pwm = PIN_MOTOR_PWMB, .in1 = PIN_MOTOR_BIN1, .in2 = PIN_MOTOR_BIN2 };
+// Pin konfigürasyonları (değerler pins.h içinde - Kanal A: Sağ, Kanal B: Sol)
+MotorPins leftPins  = { .pwm = PIN_MOTOR_LEFT_PWM,  .in1 = PIN_MOTOR_LEFT_IN1,  .in2 = PIN_MOTOR_LEFT_IN2 };
+MotorPins rightPins = { .pwm = PIN_MOTOR_RIGHT_PWM, .in1 = PIN_MOTOR_RIGHT_IN1, .in2 = PIN_MOTOR_RIGHT_IN2 };
 const uint8_t STBY_PIN = PIN_MOTOR_STBY;
 
 MotorDriver motors(leftPins, rightPins, STBY_PIN);
