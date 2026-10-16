@@ -14,12 +14,12 @@
 | TB6612FNG | BIN1 | 32 | GPIO | Sol Motor Yön 1 (12 strapping, 16 yok → 32) | 1 | Kullanımda |
 | TB6612FNG | BIN2 | 13 | GPIO | Sol Motor Yön 2 | 1 | Kullanımda |
 | TB6612FNG | STBY | 33 | GPIO | Sürücü Standby/Aktif | 1 | Kullanımda |
+| MG995 servo | Sinyal | 4 | PWM | Direksiyon Açısı (PWM) | 2 | Kullanımda |
 
 ## Rezerve pinler (henüz bağlı değil)
 
 | Modül | Sinyal | ESP32 GPIO | Hafta/Faz |
 |---|---|---|---|
-| SG90 servo | Sinyal | 4 | 2 |
 | MPU6050 | SDA / SCL | 21 / 22 | 4 |
 | Pil ölçümü | ADC | 34 | İsteğe bağlı |
 | Encoder | Sol / Sağ | 35 / 39 | Faz 6 |

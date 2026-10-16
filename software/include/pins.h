@@ -27,3 +27,6 @@ constexpr int PIN_MOTOR_AIN2 = PIN_MOTOR_RIGHT_IN2;
 constexpr int PIN_MOTOR_PWMB = PIN_MOTOR_LEFT_PWM;
 constexpr int PIN_MOTOR_BIN1 = PIN_MOTOR_LEFT_IN1;
 constexpr int PIN_MOTOR_BIN2 = PIN_MOTOR_LEFT_IN2;
+
+// --- MG995 direksiyon servosu (Hafta 2) ---
+constexpr int PIN_SERVO_STEERING = 4;   // Direksiyon servo sinyal pini (PWM)

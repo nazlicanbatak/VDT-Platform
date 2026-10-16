@@ -45,7 +45,7 @@ Bu proje, bir RC araba yapmaktan çok daha fazlasıdır. Her hafta eklenen bir k
 │  └─────────────┘  └──────────────┘  └───────────────────────┘    │
 └───────────────────────────────────────────────────────────────────┘
         │                     │                     │
-   [TB6612FNG]           [MPU6050]              [SG90 Servo]
+   [TB6612FNG]           [MPU6050]              [MG995 Servo]
    Motor L/R             Accel+Gyro            Ön Direksiyon
         │
   [DC Motor x2]
@@ -101,12 +101,12 @@ Bu proje, bir RC araba yapmaktan çok daha fazlasıdır. Her hafta eklenen bir k
 
 **EE + Mekanik:**
 - [ ] 3D baskı parçaları: Ön aks, rot kolu, motor tutucular (Fusion 360 / Onshape)
-- [ ] SG90 servo motorun direksiyon sistemine mekanik bağlantısı
+- [ ] MG995 servo motorun direksiyon sistemine mekanik bağlantısı
 - [ ] Ackermann geometrisine göre rot kolu açısının hesaplanması ve ayarlanması
 - [ ] TPU lastikler ve PLA jantların montajı
 
 **CS Görevi:**
-- [ ] ESP32 ile SG90 servo PWM kontrolü (Arduino Servo.h veya ledc API)
+- [ ] ESP32 ile MG995 servo PWM kontrolü (Arduino Servo.h veya ledc API)
 - [ ] Servo açısının (-30° ↔ +30°) PWM sinyal genişliğiyle eşleştirilmesi
 - [ ] Motor + Servo kombine kontrol testi (ileri giderken sola dön)
 
@@ -588,7 +588,7 @@ ESP32 (Tek)                   Master ECU (ESP32/STM32)
 ## 🛠️ Haftalık Araç ve Teknoloji Şeması
 
 ```
-Hafta 1-2: [PlatformIO] + [TB6612FNG] + [SG90] + [Fusion360]
+Hafta 1-2: [PlatformIO] + [TB6612FNG] + [MG995] + [Fusion360]
 Hafta 3:   + [FreeRTOS] + [BLE GATT] + [Python/bleak] + [WebSocket] + [Chart.js Dashboard]
 Hafta 4:   + [MPU6050/I2C] + [WS Telemetri Akışı]
 Hafta 5:   + [Kalman/CF Filter] + [Traction Circle Dashboard]

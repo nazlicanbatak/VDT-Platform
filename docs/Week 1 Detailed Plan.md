@@ -278,6 +278,6 @@ Aşağıdaki maddelerin tümü yeşil olmadan Hafta 2'ye (direksiyon servo & Ack
 ## 🚀 7. Sonraki Adım: Hafta 2'ye Hazırlık
 
 Hafta 1 başarıyla tamamlandığında aracımız kendi gücüyle ileri-geri gidebilir hale gelecek. Bunun hemen ardından:
-1. Ön akstaki SG90 Servo motorun güç ve sinyal hattı eklenecek.
+1. Ön akstaki MG995 Servo motorun güç ve sinyal hattı eklenecek.
 2. Direksiyon geometrisi (-30° ile +30°) test edilecek.
 3. Araç ilk viraj alma denemesini yapmaya hazır hale gelecek.
