@@ -1,68 +1,104 @@
-#include <Arduino.h>
-#include "pins.h"
 #include "motor_driver.h"
+#include "pins.h"
+#include "servo_driver.h"
+#include <Arduino.h>
 
-// Pin tanimlamalarini pins.h dosyasindan aliyoruz (Single Source of Truth)
-// Donanim lehimlemesi: Kanal A = Sag Motor (AIN1/2, PWMA), Kanal B = Sol Motor (BIN1/2, PWMB)
-MotorPins leftPins  = { .pwm = PIN_MOTOR_LEFT_PWM,  .in1 = PIN_MOTOR_LEFT_IN1,  .in2 = PIN_MOTOR_LEFT_IN2 };
-MotorPins rightPins = { .pwm = PIN_MOTOR_RIGHT_PWM, .in1 = PIN_MOTOR_RIGHT_IN1, .in2 = PIN_MOTOR_RIGHT_IN2 };
-
-// Motor surucu nesnesi"
+// Donanim nesneleri
+// Motorlar su an guvenlik amaciyla kapali tutulacak
+MotorPins leftPins = {.pwm = PIN_MOTOR_LEFT_PWM,
+                      .in1 = PIN_MOTOR_LEFT_IN1,
+                      .in2 = PIN_MOTOR_LEFT_IN2};
+MotorPins rightPins = {.pwm = PIN_MOTOR_RIGHT_PWM,
+                       .in1 = PIN_MOTOR_RIGHT_IN1,
+                       .in2 = PIN_MOTOR_RIGHT_IN2};
 MotorDriver motors(leftPins, rightPins, PIN_MOTOR_STBY);
 
+// Direksiyon servosu (GPIO 4)
+ServoDriver servo(PIN_SERVO_STEERING);
+
+// Takip edilen kalibrasyon acisi
+float currentAngle = 90.0f;
+
+void printHelp() {
+  Serial.println("\n==================================================");
+  Serial.println("🚗 VDT-Platform: MG995 Direksiyon Kalibrasyonu");
+  Serial.println("==================================================");
+  Serial.println("Tekerlekler su an kapali (durumda).");
+  Serial.println("Komutlar:");
+  Serial.println("  [A] / [D] : Sola / Saga 1 derece hassas adim");
+  Serial.println("  [Q] / [E] : Sola / Saga 5 derece hizli adim");
+  Serial.println("  [C]       : 90 derece merkez konumu");
+  Serial.println("==================================================");
+  Serial.print(">> Baslangic Acisi: ");
+  Serial.print(currentAngle);
+  Serial.println(" derece\n");
+}
+
 void setup() {
-    // Seri haberlesme baslatma (Debug ve telemetri loglari icin)
-    Serial.begin(115200);
-    delay(1500); // Seri portun oturmasi icin kisa bekleme
+  Serial.begin(115200);
+  delay(1500);
 
-    Serial.println();
-    Serial.println("==================================================");
-    Serial.println("🚗 VDT-Platform: ESP32 + TB6612FNG Tezgâh Testi");
-    Serial.println("==================================================");
+  // Motorlari guvenli sekilde baslat ve tamamen durdur
+  motors.begin();
+  motors.stopAll();
 
-    // Motor surucuyu guvenli sekilde baslat
-    motors.begin();
+  // Servoyu baslat ve 90 derece merkeze al
+  servo.begin();
+  currentAngle = servo.getAngle();
 
-    // B pinlerine bagli sol motor mekanik yerlesimden dolayi ters dondugu icin yonu yazilimla duzeltildi
-    motors.invertMotor(MOTOR_LEFT, true);
-
-    Serial.println(">> Motor surucu hazir. Test dongusu basliyor...");
+  printHelp();
 }
 
 void loop() {
-    // --- TEST 1: Ileri Yon (Orta Hiz: 140/255) ---
-    Serial.println("[TEST 1] Ileri Yon (PWM: 140)");
-    motors.setMotor(MOTOR_LEFT, DIR_FORWARD, 140);
-    motors.setMotor(MOTOR_RIGHT, DIR_FORWARD, 140);
-    delay(2000);
+  // Klavyeden (Serial Monitor) bir karakter girildi mi?
+  if (Serial.available() > 0) {
+    char cmd = Serial.read();
 
-    // --- TEST 2: Guvenli Durdurma ---
-    Serial.println("[TEST 2] Durdurma (1 saniye)");
-    motors.stopAll();
-    delay(1000);
-
-    // --- TEST 3: Geri Yon (Orta Hiz: 140/255) ---
-    Serial.println("[TEST 3] Geri Yon (PWM: 140)");
-    motors.setMotor(MOTOR_LEFT, DIR_BACKWARD, 140);
-    motors.setMotor(MOTOR_RIGHT, DIR_BACKWARD, 140);
-    delay(2000);
-
-    // --- TEST 4: Guvenli Durdurma ---
-    Serial.println("[TEST 4] Durdurma (1 saniye)");
-    motors.stopAll();
-    delay(1000);
-
-    // --- TEST 5: Yumusak Hizlanma (Akim Koruma / Ramp-up Testi) ---
-    Serial.println("[TEST 5] Yumusak Hizlanma (60 -> 220 PWM)");
-    for (uint8_t speed = 60; speed <= 220; speed += 20) {
-        motors.setMotor(MOTOR_LEFT, DIR_FORWARD, speed);
-        motors.setMotor(MOTOR_RIGHT, DIR_FORWARD, speed);
-        delay(150);
+    // Satir sonu karakterlerini atla
+    if (cmd == '\r' || cmd == '\n') {
+      return;
     }
-    delay(1000);
 
-    // --- TEST 6: Dongu Sonu Bekleme ---
-    Serial.println("[TEST 6] Dongu tamamlandi, 3 saniye bekleniyor...\n");
-    motors.stopAll();
-    delay(3000);
+    switch (cmd) {
+    case 'a':
+    case 'A':
+      currentAngle -= 1.0f;
+      break;
+    case 'd':
+    case 'D':
+      currentAngle += 1.0f;
+      break;
+    case 'q':
+    case 'Q':
+      currentAngle -= 30.0f;
+      break;
+    case 'e':
+    case 'E':
+      currentAngle += 30.0f;
+      break;
+    case 'c':
+    case 'C':
+      currentAngle = 90.0f;
+      Serial.println("[BILGI] Merkeze alindi.");
+      break;
+    case 'h':
+    case 'H':
+      printHelp();
+      return;
+    default:
+      Serial.println(
+          "[!] Gecersiz tus! (A/D: +-1, Q/E: +-5, C: Merkez, H: Yardim)");
+      return;
+    }
+
+    // Acıyı guvenli 0-180 araliginda tut ve servoya gonder
+    currentAngle = constrain(currentAngle, 0.0f, 180.0f);
+    servo.setAngle(currentAngle);
+
+    // Anlik aciyi ekrana yaz
+    delay(200);
+    Serial.print(">> Aci: ");
+    Serial.print(currentAngle, 1);
+    Serial.println(" derece");
+  }
 }
