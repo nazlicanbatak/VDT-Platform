@@ -3,9 +3,9 @@
 #include "motor_driver.h"
 #include "servo_driver.h"
 #include "steering.h"
+#include "vehicle_controller.h"
 
 // Donanim nesneleri
-// Motorlar su an guvenlik amaciyla kapali tutulacak
 MotorPins leftPins = {
     .pwm = PIN_MOTOR_LEFT_PWM,
     .in1 = PIN_MOTOR_LEFT_IN1,
@@ -18,44 +18,60 @@ MotorPins rightPins = {
 };
 MotorDriver motors(leftPins, rightPins, PIN_MOTOR_STBY);
 
-// Direksiyon servosu (GPIO 4) ve Direksiyon Katmani (Steering)
+// Direksiyon servosu ve katmani
 ServoDriver servo(PIN_SERVO_STEERING);
 Steering steering(servo);
 
-// Takip edilen hedef tekerlek acisi (-28.0 ile +28.0 arasi, 0 = duz)
-float targetWheelAngle = 0.0f;
+// Arac Kontrol Unitesi (VCU)
+VehicleController vehicle(motors, steering);
+
+// Takip edilen surus parametreleri
+int   currentThrottle = 0;     // -100 ile +100 (%)
+float currentSteering = 0.0f;  // -29.0 ile +29.0 (derece)
 
 void printHelp() {
     Serial.println("\n==================================================");
-    Serial.println("🚗 VDT-Platform: Direksiyon Katmani Testi (Steering)");
+    Serial.println("🚗 VDT-Platform: Arac Kontrol Testi (VehicleController)");
     Serial.println("==================================================");
-    Serial.println("Tekerlekler su an guvenlik amaciyla kapali.");
-    Serial.println("Efektif Tekerlek Aci Araligi: -28 deg (Sol) <-> +28 deg (Sag)");
-    Serial.println("Komutlar:");
-    Serial.println("  [A] / [D] : Sola / Saga 1 derece hassas adim");
-    Serial.println("  [Q] / [E] : Sola / Saga 5 derece hizli adim");
-    Serial.println("  [Z] / [X] : Tam Sol (-28 deg) / Tam Sag (+28 deg)");
-    Serial.println("  [C]       : 0 derece merkez konumu (Duz)");
-    Serial.println("  [H]       : Yardim menusu");
+    Serial.println("🎮 GAZ KONTROLLERI:");
+    Serial.println("  [W] / [S] : Gaz %10 Artir (Ileri) / Azalt (Geri)");
+    Serial.println("  [X]       : Gaz Kes (%0)");
+    Serial.println("🎮 DIREKSIYON KONTROLLERI:");
+    Serial.println("  [A] / [D] : Sola / Saga 3 derece normal adim");
+    Serial.println("  [Q] / [E] : Sola / Saga 1 derece hassas adim");
+    Serial.println("  [Z] / [V] : Tam Sol (-29 deg) / Tam Sag (+29 deg)");
+    Serial.println("  [C]       : Direksiyonu Duzelt (0 deg Merkez)");
+    Serial.println("🚨 GUVENLIK:");
+    Serial.println("  [BOSLUK]  : ACIL DURDURMA (Gaz %0 + Direksiyon 0 deg)");
+    Serial.println("  [H]       : Bu yardim menusunu goster");
     Serial.println("==================================================");
-    Serial.print(">> Baslangic Tekerlek Acisi: ");
-    Serial.print(targetWheelAngle, 1);
-    Serial.println(" deg\n");
+    Serial.println(">> Test basliyor. Arac beklemede.\n");
+}
+
+void printStatus() {
+    Serial.print(">> [DURUM] Gaz: ");
+    if (currentThrottle > 0) Serial.print("+");
+    Serial.print(currentThrottle);
+    Serial.print("%  |  Tekerlek: ");
+    if (currentSteering > 0) Serial.print("+");
+    Serial.print(currentSteering, 1);
+    Serial.print(" deg  |  Servo: ");
+    Serial.print(servo.getAngle(), 1);
+    Serial.println(" deg");
 }
 
 void setup() {
     Serial.begin(115200);
     delay(1500);
 
-    // Motorlari guvenli sekilde baslat ve tamamen durdur
-    motors.begin();
-    motors.stopAll();
+    // B kanalina bagli sol motor mekanik yerlesimden dolayi ters dondugu icin duzeltildi
+    motors.invertMotor(MOTOR_LEFT, true);
 
-    // Direksiyon katmanini baslat (servoyu kurar, limitleri yukler ve ortalar)
-    steering.begin();
-    targetWheelAngle = steering.getAngle();
+    // Araci baslat (motorlari kurar, servoyu baslatir ve guvenli durusa alir)
+    vehicle.begin();
 
     printHelp();
+    printStatus();
 }
 
 void loop() {
@@ -69,57 +85,85 @@ void loop() {
         }
 
         switch (cmd) {
-            case 'a':
-            case 'A':
-                targetWheelAngle -= 1.0f;
+            // --- Gaz Kontrolleri ---
+            case 'w':
+            case 'W':
+                currentThrottle += 10;
                 break;
-            case 'd':
-            case 'D':
-                targetWheelAngle += 1.0f;
-                break;
-            case 'q':
-            case 'Q':
-                targetWheelAngle -= 5.0f;
-                break;
-            case 'e':
-            case 'E':
-                targetWheelAngle += 5.0f;
-                break;
-            case 'z':
-            case 'Z':
-                targetWheelAngle = -29.0f;
-                Serial.println("[BILGI] Tam Sol (-29 deg)");
+            case 's':
+            case 'S':
+                currentThrottle -= 10;
                 break;
             case 'x':
             case 'X':
-                targetWheelAngle = 29.0f;
+                currentThrottle = 0;
+                Serial.println("[BILGI] Gaz kesildi (%0).");
+                break;
+
+            // --- Direksiyon Kontrolleri ---
+            case 'a':
+            case 'A':
+                currentSteering -= 3.0f;
+                break;
+            case 'd':
+            case 'D':
+                currentSteering += 3.0f;
+                break;
+            case 'q':
+            case 'Q':
+                currentSteering -= 1.0f;
+                break;
+            case 'e':
+            case 'E':
+                currentSteering += 1.0f;
+                break;
+            case 'z':
+            case 'Z':
+                currentSteering = -29.0f;
+                Serial.println("[BILGI] Tam Sol (-29 deg)");
+                break;
+            case 'v':
+            case 'V':
+                currentSteering = 29.0f;
                 Serial.println("[BILGI] Tam Sag (+29 deg)");
                 break;
             case 'c':
             case 'C':
-                targetWheelAngle = 0.0f;
-                Serial.println("[BILGI] Merkeze alindi (0 deg).");
+                currentSteering = 0.0f;
+                Serial.println("[BILGI] Direksiyon ortalandi (0 deg).");
                 break;
+
+            // --- Acil Durdurma ---
+            case ' ':
+            case 'p':
+            case 'P':
+                vehicle.emergencyStop();
+                currentThrottle = vehicle.getThrottle();
+                currentSteering = vehicle.getSteering();
+                Serial.println("\n🚨 [ACIL DURDURMA] Motorlar kesildi ve direksiyon duzeltildi! 🚨");
+                printStatus();
+                return;
+
+            // --- Yardim Menusu ---
             case 'h':
             case 'H':
                 printHelp();
                 return;
+
             default:
-                Serial.println("[!] Gecersiz tus! (A/D: +-1, Q/E: +-5, Z/X: +-28, C: Duz, H: Yardim)");
+                Serial.println("[!] Gecersiz tus! (H tuşuna basarak yardimi gorebilirsiniz)");
                 return;
         }
 
-        // Tekerlek acisini uygula (steering katmani icinde constrain ve interpolasyon yapilir)
-        steering.setAngle(targetWheelAngle);
-        targetWheelAngle = steering.getAngle();
+        // Sinirlamalari uygula
+        currentThrottle = constrain(currentThrottle, -100, 100);
+        currentSteering = constrain(currentSteering, -29.0f, 29.0f);
 
-        // Kullaniciya hem tekerlek acisini hem de arka plandaki servo acisini goster
-        delay(150);
-        Serial.print(">> Tekerlek: ");
-        if (targetWheelAngle > 0) Serial.print("+");
-        Serial.print(targetWheelAngle, 1);
-        Serial.print(" deg  |  Servo: ");
-        Serial.print(servo.getAngle(), 1);
-        Serial.println(" deg");
+        // Komutu araca ilet
+        vehicle.drive(currentThrottle, currentSteering);
+
+        // Durumu ekrana yazdir
+        delay(100);
+        printStatus();
     }
 }
