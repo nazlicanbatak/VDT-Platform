@@ -18,30 +18,25 @@ Bu proje, bir RC araba yapmaktan çok daha fazlasıdır. Her hafta eklenen bir k
 
 ```
 ┌───────────────────────────────────────────────────────────────────┐
-│               Tarayıcı — Telemetri Dashboard                      │
-│          HTML + Chart.js + Vanilla JS (WebSocket Client)          │
+│         Telefon / PC Tarayıcı — Mobil Telemetri & Sürüş           │
+│       HTML5 + CSS3 + Canvas Joystick (WebSocket Client)           │
 │  ┌──────────────┐  ┌─────────────────┐  ┌──────────────────────┐ │
 │  │ Joystick     │  │  G-Meter /      │  │  IMU Pitch/Roll      │ │
 │  │ (Drive-by-   │  │  Traction Circle│  │  Gauge (Yapay Ufuk)  │ │
 │  │  Wire)       │  │                 │  │                      │ │
 │  └──────────────┘  └─────────────────┘  └──────────────────────┘ │
 └────────────────────────────┬──────────────────────────────────────┘
-                             │ WebSocket (ws://)
+                             │ Wi-Fi WebSocket (ws://192.168.4.1/ws)
+                             │ HTTP Web Sunucu (http://192.168.4.1)
 ┌────────────────────────────▼──────────────────────────────────────┐
-│            Python Backend (asyncio + websockets)                   │
-│   BLE Client (bleak) ◄──► WebSocket Server ◄──► HTTP File Server  │
-│   JSON telemetri paketi yönlendirme + CSV loglama                 │
-└────────────────────────────┬──────────────────────────────────────┘
-                             │ BLE (GATT / Serial)
-┌────────────────────────────▼──────────────────────────────────────┐
-│                         ESP32 — ECU                               │
+│           ESP32 — ECU & Wi-Fi Access Point ("VDT-Car")            │
 │  ┌─────────────┐  ┌──────────────┐  ┌───────────────────────┐    │
 │  │  FreeRTOS   │  │ Sensor Task  │  │  Motor Control Task   │    │
 │  │  Scheduler  │  │ MPU6050/I2C  │  │  TB6612FNG/PWM        │    │
 │  └─────────────┘  └──────────────┘  └───────────────────────┘    │
 │  ┌─────────────┐  ┌──────────────┐  ┌───────────────────────┐    │
-│  │   BLE Task  │  │  Watchdog    │  │  E-Diff Algorithm     │    │
-│  │  (GATT Svr) │  │  Heartbeat   │  │  Torque Vectoring     │    │
+│  │ Wi-Fi + WS  │  │  Watchdog    │  │  E-Diff Algorithm     │    │
+│  │ Web Server  │  │  Heartbeat   │  │  Torque Vectoring     │    │
 │  └─────────────┘  └──────────────┘  └───────────────────────┘    │
 └───────────────────────────────────────────────────────────────────┘
         │                     │                     │
@@ -50,6 +45,7 @@ Bu proje, bir RC araba yapmaktan çok daha fazlasıdır. Her hafta eklenen bir k
         │
   [DC Motor x2]
 ```
+*(Opsiyonel: Bilgisayar da aynı Wi-Fi ağına bağlanarak telemetriyi Python ile CSV'ye kaydedebilir).*
 
 ---
 
@@ -136,85 +132,53 @@ Burada:
 
 ---
 
-### 📡 HAFTA 3 — Drive-by-Wire Kontrolü ve Python Backend
+### 📡 HAFTA 3 — Wi-Fi Drive-by-Wire Kontrolü ve Bağımsız Mobil Dashboard
 
-**Hedef:** Python betiği üzerinden ESP32'yi BLE ile kontrol etmek ve tarayıcı tabanlı Drive-by-Wire arayüzü sunmak.
+**Hedef:** ESP32'yi bağımsız bir Wi-Fi Erişim Noktası (Access Point: `VDT-Car`) ve Web Sunucu haline getirmek; herhangi bir bilgisayara ihtiyaç duymadan doğrudan telefon Safari/Chrome tarayıcısından WebSocket ile düşük gecikmeli Drive-by-Wire sürüş sağlamak.
 
 #### Yapılacaklar
 
 **CS — ESP32 Tarafı:**
-- [ ] ESP32 BLE GATT Server kurulumu (NimBLE veya Arduino BLE)
-- [ ] Throttle ve Steering için ayrı BLE Characteristic tanımlanması
-- [ ] Heartbeat (bağlantı sağlıklılık) karakteristiğinin eklenmesi
-- [ ] FreeRTOS: BLE Task ve Motor Control Task ayrımı (çift çekirdek kullanımı)
+- [ ] ESP32 Wi-Fi Access Point (`VDT-Car`, 192.168.4.1) kurulumu
+- [ ] HTTP Web Sunucusu: Mobil uyumlu dashboard (HTML/CSS/JS) dosyalarını doğrudan tarayıcıya sunma
+- [ ] WebSocket Sunucusu: Canlı iki yönlü komut ve telemetri kanalı (`ws://192.168.4.1/ws`)
+- [ ] FreeRTOS Mimarisi: Wi-Fi/WebSocket görevi (Core 0) ve Motor Kontrol görevi (Core 1) ayrımı (`commandQueue` ile)
+- [ ] Fail-Safe / Watchdog: WebSocket bağlantısı koptuğunda veya 500ms heartbeat gelmediğinde acil durdurma
 
-**CS — Python Backend:**
-- [ ] `bleak` kütüphanesi ile Python'dan BLE tarama ve bağlanma
-- [ ] `asyncio` + `websockets` ile WebSocket sunucusu kurulumu
-- [ ] Tarayıcıdan gelen joystick komutunu BLE Characteristic'e yazma
-- [ ] `http.server` ile dashboard HTML dosyasının servis edilmesi
-
-**CS — Tarayıcı Dashboard (HTML/JS):**
-- [ ] Sanal joystick bileşeni (nipplejs veya sıfırdan Canvas API ile)
-- [ ] WebSocket bağlantısı ve komut gönderme (`ws.send(JSON.stringify(cmd))`)
-- [ ] Bağlantı durumu göstergesi (yeşil/kırmızı)
+**CS — Mobil Tarayıcı Dashboard (HTML/CSS/JS):**
+- [ ] Responsive, dokunmatik sanal joystick (Sol el: Gaz/Fren, Sağ el: Direksiyon)
+- [ ] WebSocket üzerinden gerçek zamanlı komut iletimi (20–30 Hz)
+- [ ] Acil Durdurma butonu ve bağlantı durumu göstergesi (yeşil/kırmızı)
+- [ ] İlerisi için telemetriye hazır arayüz (Hafta 4 sensör göstergeleri)
 
 **EE Görevi:**
-- [ ] BLE anten yönü ve mesafe testi (açık alanda, engelli ortamda)
+- [ ] Wi-Fi açıkken 5V güç hattının akım/voltaj kararlılığı testi (brown-out kontrolü)
+- [ ] Açık alanda ve engelli ortamda Wi-Fi çekim mesafesi testi
 
 #### Bu Hafta Öğrenilen Konular
 
 | Konu | Alan |
 |------|------|
-| BLE GATT mimarisi: Service, Characteristic, Descriptor | CS/EE |
-| FreeRTOS Task oluşturma, öncelik ve yığın boyutu | CS |
-| xQueueSendFromISR ile görevler arası veri iletimi | CS |
-| Python `asyncio` olay döngüsü ve coroutine yapısı | CS |
-| WebSocket protokolü (HTTP Upgrade, frame yapısı) | CS |
+| Wi-Fi Access Point (AP) ve DHCP sunucu mantığı | CS/EE |
+| Gömülü HTTP Web Sunucu & WebSocket protokolü | CS |
+| FreeRTOS Görevleri ve Queue ile çekirdekler arası veri iletimi | CS |
+| Mobil dokunmatik olayları (Touch Events) ve Canvas API | CS |
+| Dağıtık sistemlerde Heartbeat & Fail-Safe güvenlik mimarisi | CS/Otomotiv |
 | Drive-by-Wire konsepti ve modern araçlardaki kullanımı | Otomasyon |
 
 #### FreeRTOS Görev Mimarisi
 
 ```
-Core 0:                      Core 1:
-┌─────────────────┐          ┌─────────────────────┐
-│   BLE Task      │          │  Motor Control Task  │
-│  Priority: 2    │──Queue──▶│  Priority: 3         │
-│  Stack: 4096    │          │  Stack: 2048         │
-└─────────────────┘          └─────────────────────┘
-                             ┌─────────────────────┐
-                             │   Watchdog Task      │
-                             │  Priority: 4         │
-                             │  (En yüksek öncelik) │
-                             └─────────────────────┘
-```
-
-#### Python Backend — BLE → WebSocket Köprüsü
-
-```python
-import asyncio, json, websockets
-from bleak import BleakClient
-
-DEVICE_ADDRESS = "XX:XX:XX:XX:XX:XX"
-THROTTLE_UUID  = "00001234-0000-1000-8000-00805f9b34fb"
-STEERING_UUID  = "00001235-0000-1000-8000-00805f9b34fb"
-
-async def ws_handler(websocket, ble_client):
-    """Tarayıcıdan gelen Drive-by-Wire komutunu ESP32'ye ilet."""
-    async for message in websocket:
-        cmd      = json.loads(message)
-        throttle = int(cmd["throttle"]).to_bytes(1, "big")
-        steering = int(cmd["steering"]).to_bytes(1, "big")
-        await ble_client.write_gatt_char(THROTTLE_UUID, throttle)
-        await ble_client.write_gatt_char(STEERING_UUID, steering)
-
-async def main():
-    async with BleakClient(DEVICE_ADDRESS) as ble:
-        # WebSocket sunucusu 8765 portunda — dashboard ws://localhost:8765
-        async with websockets.serve(lambda ws, _: ws_handler(ws, ble), "0.0.0.0", 8765):
-            await asyncio.Future()  # Sonsuza kadar çalış
-
-asyncio.run(main())
+Core 0:                               Core 1:
+┌──────────────────────────┐          ┌─────────────────────┐
+│  Wi-Fi + WebSocket Task  │          │  Motor Control Task  │
+│  (Web Server & Network)  │──Queue──▶│  (VehicleController) │
+│  Priority: 2, Stack: 4096│          │  Priority: 3        │
+└──────────────────────────┘          └─────────────────────┘
+                                      ┌─────────────────────┐
+                                      │   Watchdog Check    │
+                                      │  (500ms timeout)    │
+                                      └─────────────────────┘
 ```
 
 ---
