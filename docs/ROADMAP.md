@@ -237,7 +237,7 @@ void watchdogTask(void *pvParams) {
 - [ ] Wire.h ile ham ivme ve açısal hız verisi okuma
 - [ ] Ham veriyi SI birimlerine dönüştürme (m/s², °/s, G)
 - [ ] Serial Plotter ile veri görselleştirme
-- [ ] BLE üzerinden iOS'a telemetri verisi iletimi
+- [ ] Wi-Fi WebSocket üzerinden telefona canlı telemetri verisi iletimi (detay: `Week 4 Detailed Plan.md`)
 
 #### Bu Hafta Öğrenilen Konular
 
