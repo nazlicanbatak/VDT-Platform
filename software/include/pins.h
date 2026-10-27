@@ -30,3 +30,8 @@ constexpr int PIN_MOTOR_BIN2 = PIN_MOTOR_LEFT_IN2;
 
 // --- MG995 direksiyon servosu (Hafta 2) ---
 constexpr int PIN_SERVO_STEERING = 4;   // Direksiyon servo sinyal pini (PWM)
+
+// --- MPU6050 6-DOF IMU (Hafta 4) ---
+constexpr int PIN_IMU_SDA = 21;  // I2C Veri (Serial Data)
+constexpr int PIN_IMU_SCL = 22;  // I2C Saat (Serial Clock)
+

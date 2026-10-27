@@ -15,12 +15,13 @@
 | TB6612FNG | BIN2 | 13 | GPIO | Sol Motor Yön 2 | 1 | Kullanımda |
 | TB6612FNG | STBY | 33 | GPIO | Sürücü Standby/Aktif | 1 | Kullanımda |
 | MG995 servo | Sinyal | 4 | PWM | Direksiyon Açısı (PWM) | 2 | Kullanımda |
+| MPU6050 | SDA | 21 | I2C | I2C Veri Hattı (Serial Data) | 4 | Kullanımda |
+| MPU6050 | SCL | 22 | I2C | I2C Saat Hattı (Serial Clock) | 4 | Kullanımda |
 
 ## Rezerve pinler (henüz bağlı değil)
 
 | Modül | Sinyal | ESP32 GPIO | Hafta/Faz |
 |---|---|---|---|
-| MPU6050 | SDA / SCL | 21 / 22 | 4 |
 | Pil ölçümü | ADC | 34 | İsteğe bağlı |
 | Encoder | Sol / Sağ | 35 / 39 | Faz 6 |
 | MCP2515 CAN | SCK / MISO / MOSI / CS / INT | 18 / 19 / 23 / 5 / 17 | Faz 5 |
